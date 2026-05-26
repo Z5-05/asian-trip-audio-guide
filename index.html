@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Аудиогид по Азии</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <div class="container">
+      <h1>Аудиогид по Азии</h1>
+      <p class="header-sub">Сингапур &middot; Куала-Лумпур &middot; Бали</p>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="singapore">Сингапур</button>
+      <button class="tab-btn" data-tab="kuala-lumpur">Куала-Лумпур</button>
+      <button class="tab-btn" data-tab="bali">Бали</button>
+    </nav>
+
+    <section id="tab-singapore" class="tab-panel active">
+      <div class="panel-header">
+        <h2>Сингапур</h2>
+        <button class="btn btn-primary btn-add" data-destination="singapore">+ Добавить место</button>
+      </div>
+      <div class="cards-grid" id="grid-singapore"></div>
+    </section>
+
+    <section id="tab-kuala-lumpur" class="tab-panel">
+      <div class="panel-header">
+        <h2>Куала-Лумпур</h2>
+        <button class="btn btn-primary btn-add" data-destination="kuala-lumpur">+ Добавить место</button>
+      </div>
+      <div class="cards-grid" id="grid-kuala-lumpur"></div>
+    </section>
+
+    <section id="tab-bali" class="tab-panel">
+      <div class="panel-header">
+        <h2>Бали</h2>
+        <button class="btn btn-primary btn-add" data-destination="bali">+ Добавить место</button>
+      </div>
+      <div class="cards-grid" id="grid-bali"></div>
+    </section>
+
+  </main>
+
+  <div class="modal-overlay hidden" id="modal-overlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-heading">
+      <div class="modal-header">
+        <h3 id="modal-heading">Добавить место</h3>
+        <button class="modal-close" id="modal-close" aria-label="Закрыть">&times;</button>
+      </div>
+      <form id="attraction-form" novalidate>
+        <div class="form-group">
+          <label for="field-title">Название <span class="req">*</span></label>
+          <input type="text" id="field-title" placeholder="напр. Marina Bay Sands" autocomplete="off">
+          <span class="field-error" id="err-title"></span>
+        </div>
+        <div class="form-group">
+          <label for="field-description">Описание <span class="req">*</span></label>
+          <textarea id="field-description" rows="3" placeholder="Короткое описание места..."></textarea>
+          <span class="field-error" id="err-description"></span>
+        </div>
+        <div class="form-group">
+          <label for="field-maps">Ссылка на Google Maps <span class="req">*</span></label>
+          <input type="url" id="field-maps" placeholder="https://maps.google.com/...">
+          <span class="field-error" id="err-maps"></span>
+        </div>
+        <div class="form-group">
+          <label for="field-photos">Фотографии</label>
+          <textarea id="field-photos" rows="3" placeholder="https://example.com/фото1.jpg&#10;https://example.com/фото2.jpg"></textarea>
+          <span class="field-hint">По одной ссылке на строку</span>
+        </div>
+        <div class="form-group">
+          <label for="field-audio">Аудиогид</label>
+          <input type="file" id="field-audio" accept="audio/*">
+          <span class="field-hint" id="audio-hint"></span>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btn-cancel">Отмена</button>
+          <button type="submit" class="btn btn-primary" id="btn-save">Сохранить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
