@@ -1,232 +1,374 @@
-# Asian Trip Audio Guide
+# Аудиогид по Азии
 
-A static, browser-based tourist audio guide for **Singapore**, **Kuala Lumpur**, and **Bali**. No frameworks, no backend, no build step — just HTML, CSS, and vanilla JavaScript. All data is saved in the browser's localStorage.
+Персональный аудиогид для путешествия по Сингапуру, Куала-Лумпуру и Бали. Данные хранятся на сервере в файле `data.json` — приложение работает одинаково с любого устройства и браузера.
 
 ---
 
-## File Structure
+## Структура файлов
 
 ```
 asian-trip-guide/
-├── index.html   — page structure and layout
-├── style.css    — all styles and responsive rules
-├── script.js    — all application logic
-└── README.md    — this file
+├── index.html      — разметка страницы
+├── style.css       — все стили
+├── script.js       — логика приложения
+├── server.js       — Node.js-сервер (Express)
+├── package.json    — зависимости
+├── .gitignore      — исключает node_modules и data.json из git
+├── data.json       — создаётся автоматически при первом запуске
+└── README.md       — этот файл
 ```
 
 ---
 
-## How to Run Locally
+## Запуск локально
 
-**Option 1 — Open directly:**  
-Double-click `index.html` to open it in any modern browser. Everything works out of the box.
+**Требования:** Node.js 18 или новее.
 
-**Option 2 — Local server (recommended for audio files):**
 ```bash
-# Python 3
-python -m http.server 8080
+# 1. Установить зависимости
+npm install
 
-# Node.js (if npx is available)
-npx serve .
+# 2. Запустить сервер
+node server.js
+# → Сервер запущен: http://localhost:3000
+
+# 3. Открыть в браузере
+http://localhost:3000
 ```
-Then open `http://localhost:8080` in your browser.
+
+При первом запуске `data.json` создаётся автоматически с демо-данными.
 
 ---
 
-## Deploy to GitHub Pages
+## Деплой на VPS (основной способ)
 
-1. Create a new repository on GitHub and push your files:
-   ```bash
-   git init
-   git add .
-   git commit -m "initial commit"
-   git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO.git
-   git push -u origin main
-   ```
-2. On GitHub, go to **Settings → Pages**.
-3. Under **Source**, choose your `main` branch and the `/ (root)` folder.
-4. Click **Save**.
-5. Your site will be live at `https://YOUR_USERNAME.github.io/YOUR_REPO/` within a minute.
+### 1. Установить Node.js на сервере
 
----
-
-## Deploy to Netlify
-
-**Drag-and-drop (fastest):**
-1. Go to [app.netlify.com](https://app.netlify.com).
-2. Drag your project folder onto the **"Drop your site folder here"** area.
-3. Your site is immediately live at a random `.netlify.app` URL.
-
-**From GitHub:**
-1. Click **Add new site → Import an existing project**.
-2. Connect your GitHub account and select your repository.
-3. Leave **Build command** and **Publish directory** empty.
-4. Click **Deploy site**.
-
----
-
-## Deploy to Vercel
-
-**Via dashboard:**
-1. Go to [vercel.com](https://vercel.com) and click **Add New Project**.
-2. Import your GitHub repository.
-3. Leave all settings at their defaults (no build command needed).
-4. Click **Deploy**.
-
-**Via CLI:**
 ```bash
-npm install -g vercel
-vercel
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
 ```
-Follow the prompts and your site will be live in seconds.
 
----
+Проверить:
 
-## How to Add a New Attraction
+```bash
+node -v   # v20.x.x
+npm -v    # 10.x.x
+```
 
-### Using the website UI (recommended)
+### 2. Загрузить файлы на сервер
 
-1. Open the website in your browser.
-2. Click the tab for the destination you want (Singapore, Kuala Lumpur, or Bali).
-3. Click the blue **+ Add Attraction** button in the top-right of that section.
-4. Fill in all required fields:
-   - **Title** — the name of the attraction
-   - **Description** — a short 1–3 sentence description
-   - **Google Maps Link** — the URL from Google Maps (see tip below)
-5. Optionally click **Choose File** to attach an audio guide (MP3, WAV, or OGG).
-6. Click **Save**. The new card appears immediately — no reload needed.
+**Вариант А — через Git:**
 
-### Adding demo data directly in the code
+```bash
+# На сервере
+git clone https://github.com/ВАШ_ПОЛЬЗОВАТЕЛЬ/ВАШ_РЕПОЗИТОРИЙ.git /var/www/asian-trip
+cd /var/www/asian-trip
+```
 
-1. Open `script.js`.
-2. Find the `DEMO_DATA` array near the top of the file.
-3. Add a new object to the array, following this exact format:
-   ```js
-   {
-     id: 'my-unique-id',
-     destination: 'singapore',
-     title: 'Attraction Name',
-     description: 'A short description of the place.',
-     googleMapsLink: 'https://maps.google.com/?q=Place+Name+Singapore',
-     audioSrc: ''
-   }
-   ```
-   - `id` must be unique — use any string like `'sg-4'` or `'kl-new-1'`.
-   - `destination` must be exactly one of: `singapore`, `kuala-lumpur`, or `bali`.
-   - `audioSrc` should be `''` (empty) unless you are embedding a base64 audio string.
-4. Save the file.
-5. Open the site in a **private/incognito window** (or clear localStorage) to see the fresh demo data.
+**Вариант Б — через SCP с локальной машины:**
 
-> **Note:** Once a user visits the site, data is saved to localStorage. Changes to `DEMO_DATA` only appear for first-time visitors or after clearing stored data.
+```bash
+scp -r ./asian-trip user@IP_СЕРВЕРА:/var/www/asian-trip
+```
 
----
+### 3. Установить зависимости и проверить запуск
 
-## How to Add or Replace Audio Files
+```bash
+cd /var/www/asian-trip
+npm install
+node server.js
+# → Сервер запущен: http://localhost:3000
+```
 
-### Via the website
+Нажмите `Ctrl+C` чтобы остановить — это был тест. Дальше настраиваем постоянный запуск.
 
-1. Find the attraction card you want to update.
-2. Click the **Edit** button on that card.
-3. Under **Audio Guide File**, click **Choose File**.
-4. Select an audio file from your device (MP3 is recommended).
-5. Click **Save**. The audio player on the card will update immediately.
+### 4. Установить PM2 (менеджер процессов)
 
-### Tips for audio files
+PM2 удерживает сервер запущенным и автоматически перезапускает его при падении или перезагрузке VPS.
 
-- **Recommended format:** MP3 (best compression-to-quality ratio)
-- **Recommended size:** Under 2 MB per file
-- **Why the size limit?** Audio is stored as base64 in the browser's localStorage, which has a 5–10 MB total limit depending on the browser. Large files will cause a storage error.
-- To remove audio from an attraction, click **Edit**, leave the file field empty, then save — this keeps the existing audio. To truly remove it, you would need to edit the localStorage data directly (see the "Resetting to Demo Data" section below).
+```bash
+sudo npm install -g pm2
 
----
+# Запустить приложение
+pm2 start server.js --name asian-trip
 
-## How to Edit the Text Description
+# Сохранить список процессов
+pm2 save
 
-1. Find the attraction card you want to update.
-2. Click the **Edit** button.
-3. Change the **Title** or **Description** text in the modal form.
-4. Click **Save**. Changes appear on the card immediately.
+# Настроить автозапуск при перезагрузке сервера
+pm2 startup
+# Выполните команду, которую выведет эта команда (она начинается с sudo env ...)
+```
 
----
+Полезные команды PM2:
 
-## How to Add or Change a Google Maps Link
+```bash
+pm2 status                    # статус всех процессов
+pm2 logs asian-trip           # логи в реальном времени
+pm2 restart asian-trip        # перезапустить
+pm2 stop asian-trip           # остановить
+```
 
-1. Click the **Edit** button on any attraction card.
-2. Replace the text in the **Google Maps Link** field with a new URL.
-3. Click **Save**.
+### 5. Настроить Nginx как прокси (чтобы открывать по порту 80/443)
 
-**How to get a Google Maps link:**
-1. Go to [maps.google.com](https://maps.google.com).
-2. Search for the attraction by name.
-3. Copy the URL from your browser's address bar.
-4. Paste it into the Google Maps Link field.
+```bash
+sudo apt-get install -y nginx
+sudo nano /etc/nginx/sites-available/asian-trip
+```
 
-Links must start with `http://` or `https://` — the form will show an error otherwise.
+Вставить конфигурацию:
 
----
+```nginx
+server {
+    listen 80;
+    server_name ВАШ_ДОМЕН_ИЛИ_IP;
 
-## Customization Guide
+    client_max_body_size 100m;
 
-### Renaming the site title
-Open `index.html` and update:
-- The `<title>` tag (browser tab title)
-- The `<h1>` text inside `<header>` (visible heading)
-- The `<p class="header-sub">` subtitle line
-
-### Changing the color theme
-Open `style.css` and edit the CSS variables in the `:root` block at the top:
-```css
-:root {
-  --primary: #2563eb;       /* main blue — buttons, tabs, links */
-  --primary-dark: #1d4ed8;  /* hover state for primary */
-  --bg: #f4f6fb;            /* page background */
-  --surface: #ffffff;       /* card and modal background */
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
 }
 ```
 
-### Renaming a destination
-To rename "Bali" to "Bangkok", for example, you need to update three places:
+> `client_max_body_size 100m` обязателен — иначе Nginx будет обрезать большие аудиофайлы.
 
-**In `index.html`:**
-- Tab button: change `data-tab="bali"` to `data-tab="bangkok"` and update the button text
-- Section: change `id="tab-bali"` to `id="tab-bangkok"` and update the `<h2>` heading
-- Add button: change `data-destination="bali"` to `data-destination="bangkok"`
-- Cards grid: change `id="grid-bali"` to `id="grid-bangkok"`
+Активировать и перезапустить:
 
-**In `script.js`:**
-- Update the `DESTINATIONS` array: replace `'bali'` with `'bangkok'`
-- Update any demo data entries: change `destination: 'bali'` to `destination: 'bangkok'`
+```bash
+sudo ln -s /etc/nginx/sites-available/asian-trip /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+```
 
-### Adding a fourth destination (e.g., Tokyo)
+Теперь приложение доступно по `http://ВАШ_ДОМЕН_ИЛИ_IP`.
 
-**In `index.html`:**
-1. Add a new tab button inside `<nav class="tabs">`:
-   ```html
-   <button class="tab-btn" data-tab="tokyo">Tokyo</button>
-   ```
-2. Add a new section after the last `</section>`:
-   ```html
-   <section id="tab-tokyo" class="tab-panel">
-     <div class="panel-header">
-       <h2>Tokyo</h2>
-       <button class="btn btn-primary btn-add" data-destination="tokyo">+ Add Attraction</button>
-     </div>
-     <div class="cards-grid" id="grid-tokyo"></div>
-   </section>
-   ```
+### 6. Обновить приложение после изменений в коде
 
-**In `script.js`:**
-1. Add `'tokyo'` to the `DESTINATIONS` array:
-   ```js
-   const DESTINATIONS = ['singapore', 'kuala-lumpur', 'bali', 'tokyo'];
-   ```
-2. Add demo data objects with `destination: 'tokyo'` to the `DEMO_DATA` array.
+```bash
+cd /var/www/asian-trip
+git pull                  # если используете Git
+pm2 restart asian-trip
+```
 
-No CSS changes are needed — the layout adapts automatically.
+`data.json` при обновлении не затрагивается — все данные сохраняются.
 
-### Resetting to demo data (clearing localStorage)
-1. Open browser DevTools with **F12**.
-2. Go to the **Application** tab (Chrome) or **Storage** tab (Firefox).
-3. Expand **Local Storage** and select your site's origin.
-4. Find the key `asian-trip-guide-v1` and delete it.
-5. Reload the page — the demo data will appear fresh.
+---
+
+## Деплой на Timeweb Cloud Apps
+
+1. Перейти в раздел **Облачные приложения → Добавить App**.
+2. Выбрать тип: **Node.js**.
+3. Выбрать репозиторий: `asian-trip-audio-guide`, ветка `main`.
+4. Заполнить настройки:
+
+| Поле | Значение |
+|---|---|
+| Команда сборки | `npm run build` — оставить как есть (скрипт уже добавлен в `package.json`) |
+| Директория сборки | очистить поле (убрать `/dist`) |
+| Путь до директории проекта | оставить пустым |
+| Переменные | ничего не нужно — Timeweb передаёт `PORT` автоматически |
+
+5. Указать имя приложения, нажать **Добавить**.
+
+Timeweb сам запустит `npm run build` (установит зависимости), а потом `npm start` → `node server.js`.
+
+> **Важно про данные:** Timeweb сбрасывает файловую систему при каждом новом деплое. Это значит, что `data.json` (все ваши места, аудио, фото) удалится при обновлении кода.
+>
+> **Как защититься:** перед деплоем скачайте бэкап через кнопку в интерфейсе Timeweb (раздел «Файлы» или через SSH), а после деплоя загрузите его обратно. Подробнее — в разделе «Резервное копирование» ниже.
+
+---
+
+## Деплой на Railway (бесплатная альтернатива VPS)
+
+[Railway](https://railway.app) поддерживает Node.js из коробки и имеет бесплатный тариф.
+
+1. Зарегистрироваться на [railway.app](https://railway.app).
+2. Нажать **New Project → Deploy from GitHub repo**.
+3. Выбрать репозиторий.
+4. Railway автоматически определит `package.json` и запустит `npm start`.
+5. В разделе **Variables** добавить переменную `PORT = 3000` (если нужно).
+
+> Учтите: на бесплатном тарифе Railway файловая система не персистентна — `data.json` сбрасывается при каждом деплое. Для постоянного хранения нужен платный тариф или замена на базу данных.
+
+---
+
+## Деплой на Render
+
+1. Зарегистрироваться на [render.com](https://render.com).
+2. Нажать **New → Web Service**.
+3. Подключить GitHub-репозиторий.
+4. Настройки:
+   - **Build Command:** `npm install`
+   - **Start Command:** `node server.js`
+5. Нажать **Create Web Service**.
+
+Те же ограничения по персистентности файлов, что и у Railway (на бесплатном тарифе).
+
+---
+
+## Резервное копирование данных
+
+Все данные хранятся в файле `/var/www/asian-trip/data.json` на сервере. Это обычный JSON-файл, который можно копировать и восстанавливать.
+
+**Скачать бэкап с сервера:**
+
+```bash
+scp user@IP_СЕРВЕРА:/var/www/asian-trip/data.json ./backup-$(date +%Y%m%d).json
+```
+
+**Восстановить из бэкапа:**
+
+```bash
+scp ./backup-20260526.json user@IP_СЕРВЕРА:/var/www/asian-trip/data.json
+pm2 restart asian-trip
+```
+
+**Автоматический бэкап через cron** (каждую ночь в 3:00):
+
+```bash
+crontab -e
+# Добавить строку:
+0 3 * * * cp /var/www/asian-trip/data.json /var/backups/asian-trip-$(date +\%Y\%m\%d).json
+```
+
+---
+
+## Как добавить новое место
+
+1. Открыть сайт в браузере.
+2. Нажать вкладку нужного города.
+3. Нажать кнопку **+ Добавить место**.
+4. Заполнить поля:
+   - **Название** — название достопримечательности (оригинальное, на английском)
+   - **Описание** — 2–4 предложения на русском
+   - **Ссылка на Google Maps** — URL из адресной строки браузера на maps.google.com
+   - **Фотографии** — прямые ссылки на фото, по одной на строку (см. раздел ниже)
+   - **Аудиогид** — MP3-файл с голосовым описанием
+5. Нажать **Сохранить** — место появится сразу, данные запишутся на сервер.
+
+---
+
+## Как добавить или заменить аудиофайл
+
+1. Нажать **Редактировать** на нужной карточке.
+2. В поле **Аудиогид** нажать **Выбрать файл** и выбрать MP3.
+3. Нажать **Сохранить**.
+
+**Рекомендации по аудио:**
+- Формат: MP3
+- Размер: до 5 МБ (оптимально 1–3 МБ)
+- Аудио хранится в формате base64 внутри `data.json`. При очень большом количестве мест с тяжёлым аудио файл может вырасти до нескольких сотен МБ — это нормально для персонального использования.
+
+---
+
+## Как изменить текстовое описание
+
+1. Нажать **Редактировать** на карточке.
+2. Изменить поле **Описание**.
+3. Нажать **Сохранить**.
+
+---
+
+## Как добавить или изменить ссылку на Google Maps
+
+1. Перейти на [maps.google.com](https://maps.google.com).
+2. Найти нужное место.
+3. Скопировать URL из адресной строки браузера.
+4. Нажать **Редактировать** на карточке, вставить ссылку в поле **Ссылка на Google Maps**.
+5. Нажать **Сохранить**.
+
+Ссылка должна начинаться с `http://` или `https://` — иначе форма покажет ошибку.
+
+---
+
+## Как добавить фотографии
+
+Фотографии добавляются как прямые URL-ссылки (одна на строку в поле **Фотографии**).
+
+**Где хранить фото и как получить прямую ссылку:**
+
+| Сервис | Как получить ссылку |
+|---|---|
+| **Imgur** | Загрузить → правой кнопкой по фото → «Копировать адрес изображения» → ссылка вида `https://i.imgur.com/xxxxx.jpg` |
+| **GitHub** | Загрузить в репозиторий → открыть файл → кнопка **Raw** → скопировать URL |
+| **Cloudinary** | Загрузить → скопировать Delivery URL |
+
+Ссылка должна вести **прямо на файл** (`.jpg`, `.png`, `.webp`), а не на страницу с картинкой.
+
+---
+
+## Руководство по кастомизации
+
+### Переименовать город
+
+В `index.html`:
+- Изменить текст кнопки вкладки и заголовка `<h2>`.
+- Не менять `data-tab`, `id` секций и `data-destination` — они используются в JS.
+
+### Изменить цветовую схему
+
+В `style.css` отредактировать переменные в блоке `:root`:
+
+```css
+:root {
+  --primary: #2563eb;      /* основной синий */
+  --primary-dark: #1d4ed8; /* hover-состояние */
+  --bg: #f4f6fb;           /* фон страницы */
+  --surface: #ffffff;      /* фон карточек и модального окна */
+}
+```
+
+### Добавить четвёртый город (например, Токио)
+
+**В `index.html`:**
+
+Добавить кнопку вкладки:
+```html
+<button class="tab-btn" data-tab="tokyo">Токио</button>
+```
+
+Добавить секцию (после последнего `</section>`):
+```html
+<section id="tab-tokyo" class="tab-panel">
+  <div class="panel-header">
+    <h2>Токио</h2>
+    <button class="btn btn-primary btn-add" data-destination="tokyo">+ Добавить место</button>
+  </div>
+  <div class="cards-grid" id="grid-tokyo"></div>
+</section>
+```
+
+**В `script.js`:**
+
+Добавить `'tokyo'` в массив `DESTINATIONS`:
+```js
+const DESTINATIONS = ['singapore', 'kuala-lumpur', 'bali', 'tokyo'];
+```
+
+### Сбросить демо-данные
+
+Удалить `data.json` на сервере и перезапустить:
+
+```bash
+rm /var/www/asian-trip/data.json
+pm2 restart asian-trip
+```
+
+При следующем открытии сайта демо-данные загрузятся автоматически.
+
+### Изменить порт
+
+По умолчанию сервер запускается на порту `3000`. Чтобы изменить — задать переменную окружения:
+
+```bash
+PORT=8080 node server.js
+# или в PM2:
+pm2 start server.js --name asian-trip --env PORT=8080
+```

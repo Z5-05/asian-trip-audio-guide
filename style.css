@@ -346,6 +346,16 @@ header h1 {
   display: none !important;
 }
 
+.save-error {
+  background: #fef2f2;
+  color: var(--danger);
+  border-bottom: 2px solid #fecaca;
+  text-align: center;
+  padding: 10px 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;

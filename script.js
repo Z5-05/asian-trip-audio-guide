@@ -1,4 +1,3 @@
-const STORAGE_KEY = 'asian-trip-guide-v1';
 const DESTINATIONS = ['singapore', 'kuala-lumpur', 'bali'];
 
 const DEMO_DATA = [
@@ -121,22 +120,37 @@ function generateId() {
   return 'att-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
 }
 
-function loadData() {
+async function loadData() {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    attractions = stored ? JSON.parse(stored) : DEMO_DATA.map(a => Object.assign({}, a));
-    if (!stored) saveData();
-  } catch (_) {
-    attractions = DEMO_DATA.map(a => Object.assign({}, a));
+    const res = await fetch('/api/data');
+    if (!res.ok) throw new Error();
+    const json = await res.json();
+    if (Array.isArray(json) && json.length > 0) {
+      attractions = json;
+    } else {
+      attractions = DEMO_DATA.map(a => ({ ...a }));
+      await saveData();
+    }
+  } catch {
+    attractions = DEMO_DATA.map(a => ({ ...a }));
+    showSaveError('Не удалось подключиться к серверу. Данные не сохраняются.');
   }
 }
 
-function saveData() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(attractions));
-  } catch (_) {
-    alert('Превышен лимит хранилища. Попробуйте использовать файл поменьше (рекомендуется до 2 МБ).');
-  }
+async function saveData() {
+  const res = await fetch('/api/data', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(attractions)
+  });
+  if (!res.ok) throw new Error();
+}
+
+function showSaveError(msg) {
+  const el = document.getElementById('save-error');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+  setTimeout(() => el.classList.add('hidden'), 6000);
 }
 
 function byDestination(dest) {
@@ -296,7 +310,7 @@ function fileToBase64(file) {
   });
 }
 
-function handleSubmit(e) {
+async function handleSubmit(e) {
   e.preventDefault();
   clearErrors();
   if (!validateForm()) return;
@@ -311,10 +325,10 @@ function handleSubmit(e) {
   saveBtn.disabled = true;
   saveBtn.textContent = 'Сохранение…';
 
-  const currentAudio = editingId ? (findById(editingId) || {}).audioSrc || '' : '';
-  const audioPromise = file ? fileToBase64(file) : Promise.resolve(currentAudio);
+  try {
+    const currentAudio = editingId ? (findById(editingId) || {}).audioSrc || '' : '';
+    const audioSrc = file ? await fileToBase64(file) : currentAudio;
 
-  audioPromise.then(audioSrc => {
     if (editingId) {
       const idx = attractions.findIndex(a => a.id === editingId);
       if (idx !== -1) {
@@ -331,28 +345,35 @@ function handleSubmit(e) {
         audioSrc
       });
     }
-    saveData();
+
+    await saveData();
     renderDestination(editingDest);
     closeModal();
-  }).catch(() => {
-    alert('Не удалось прочитать аудиофайл. Пожалуйста, попробуйте ещё раз.');
-  }).finally(() => {
+  } catch {
+    alert('Ошибка при сохранении. Проверьте подключение к серверу.');
+  } finally {
     saveBtn.disabled = false;
     saveBtn.textContent = 'Сохранить';
-  });
+  }
 }
 
-function handleDelete(id) {
+async function handleDelete(id) {
   const att = findById(id);
   if (!att) return;
   if (!confirm(`Удалить «${att.title}»?`)) return;
+
   attractions = attractions.filter(a => a.id !== id);
-  saveData();
   renderDestination(att.destination);
+
+  try {
+    await saveData();
+  } catch {
+    showSaveError('Ошибка при удалении. Перезагрузите страницу.');
+  }
 }
 
-function init() {
-  loadData();
+async function init() {
+  await loadData();
   renderAll();
 
   document.querySelectorAll('.tab-btn').forEach(btn => {

@@ -1,0 +1,13 @@
+{
+  "name": "asian-trip-audio-guide",
+  "version": "1.0.0",
+  "description": "Аудиогид по Азии — Сингапур, Куала-Лумпур, Бали",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "build": "npm install"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
