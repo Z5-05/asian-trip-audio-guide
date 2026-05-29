@@ -120,30 +120,67 @@ function generateId() {
   return 'att-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
 }
 
+const LS_KEY = 'asian-trip-data';
+
+function loadFromLocalStorage() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveToLocalStorage() {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(attractions));
+  } catch {}
+}
+
+async function fetchWithTimeout(url, options = {}, ms = 5000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function loadData() {
   try {
-    const res = await fetch('/api/data');
+    const res = await fetchWithTimeout('/api/data');
     if (!res.ok) throw new Error();
     const json = await res.json();
     if (Array.isArray(json) && json.length > 0) {
       attractions = json;
-    } else {
-      attractions = DEMO_DATA.map(a => ({ ...a }));
-      await saveData();
+      saveToLocalStorage();
+      return;
     }
-  } catch {
-    attractions = DEMO_DATA.map(a => ({ ...a }));
-    showSaveError('Не удалось подключиться к серверу. Данные не сохраняются.');
+  } catch {}
+
+  const local = loadFromLocalStorage();
+  if (local) {
+    attractions = local;
+    return;
   }
+
+  attractions = DEMO_DATA.map(a => ({ ...a }));
+  saveToLocalStorage();
 }
 
 async function saveData() {
-  const res = await fetch('/api/data', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(attractions)
-  });
-  if (!res.ok) throw new Error();
+  saveToLocalStorage();
+  try {
+    const res = await fetchWithTimeout('/api/data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(attractions)
+    });
+    if (!res.ok) throw new Error();
+  } catch {}
 }
 
 function showSaveError(msg) {
@@ -349,8 +386,8 @@ async function handleSubmit(e) {
     await saveData();
     renderDestination(editingDest);
     closeModal();
-  } catch {
-    alert('Ошибка при сохранении. Проверьте подключение к серверу.');
+  } catch (err) {
+    alert('Ошибка при сохранении: ' + (err && err.message ? err.message : 'неизвестная ошибка'));
   } finally {
     saveBtn.disabled = false;
     saveBtn.textContent = 'Сохранить';
@@ -364,12 +401,7 @@ async function handleDelete(id) {
 
   attractions = attractions.filter(a => a.id !== id);
   renderDestination(att.destination);
-
-  try {
-    await saveData();
-  } catch {
-    showSaveError('Ошибка при удалении. Перезагрузите страницу.');
-  }
+  await saveData();
 }
 
 async function init() {
