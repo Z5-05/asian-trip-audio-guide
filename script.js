@@ -164,6 +164,7 @@ async function loadData() {
   const local = loadFromLocalStorage();
   if (local) {
     attractions = local;
+    saveData(); // синхронизируем с сервером в фоне (например, после редеплоя)
     return;
   }
 
